@@ -4,7 +4,7 @@
 ## Makefile for OpenSSL
 ##
 
-VERSION=1.0.0e
+VERSION=1.0.0h
 MAJOR=1
 MINOR=0.0
 SHLIB_VERSION_NUMBER=1.0.0
@@ -324,7 +324,8 @@ libcrypto.pc: Makefile
 	    echo 'Description: OpenSSL cryptography library'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lcrypto $(EX_LIBS)'; \
+	    echo 'Libs: -L$${libdir} -lcrypto'; \
+	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libcrypto.pc
 
 libssl.pc: Makefile
@@ -337,7 +338,8 @@ libssl.pc: Makefile
 	    echo 'Description: Secure Sockets Layer and cryptography libraries'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+	    echo 'Libs: -L$${libdir} -lssl -lcrypto'; \
+	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > libssl.pc
 
 openssl.pc: Makefile
@@ -350,7 +352,8 @@ openssl.pc: Makefile
 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires: '; \
-	    echo 'Libs: -L$${libdir} -lssl -lcrypto $(EX_LIBS)'; \
+	    echo 'Libs: -L$${libdir} -lssl -lcrypto'; \
+	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir} $(KRB5_INCLUDES)' ) > openssl.pc
 
 Makefile: Makefile.org Configure config
