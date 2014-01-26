@@ -403,15 +403,20 @@ int tls1_change_cipher_state(SSL *s, int which)
 			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
 			else
 			s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
-		if (s->enc_write_ctx != NULL)
+		if (s->enc_write_ctx != NULL && !SSL_IS_DTLS(s))
 			reuse_dd = 1;
-		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
+		else if ((s->enc_write_ctx=EVP_CIPHER_CTX_new()) == NULL)
 			goto err;
-		else
-			/* make sure it's intialized in case we exit later with an error */
-			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		dd= s->enc_write_ctx;
-		mac_ctx = ssl_replace_hash(&s->write_hash,NULL);
+		if (SSL_IS_DTLS(s))
+			{
+			mac_ctx = EVP_MD_CTX_create();
+			if (!mac_ctx)
+				goto err;
+			s->write_hash = mac_ctx;
+			}
+		else
+			mac_ctx = ssl_replace_hash(&s->write_hash,NULL);
 #ifndef OPENSSL_NO_COMP
 		if (s->compress != NULL)
 			{
@@ -851,7 +856,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	SSL3_RECORD *rec;
 	unsigned char *seq;
 	EVP_MD_CTX *hash;
-	size_t md_size;
+	size_t md_size, orig_len;
 	int i;
 	EVP_MD_CTX hmac, *mac_ctx;
 	unsigned char header[13];
@@ -898,6 +903,10 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	else
 		memcpy(header, seq, 8);
 
+	/* kludge: tls1_cbc_remove_padding passes padding length in rec->type */
+	orig_len = rec->length+md_size+((unsigned int)rec->type>>8);
+	rec->type &= 0xff;
+
 	header[8]=rec->type;
 	header[9]=(unsigned char)(ssl->version>>8);
 	header[10]=(unsigned char)(ssl->version);
@@ -916,7 +925,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 			mac_ctx,
 			md, &md_size,
 			header, rec->input,
-			rec->length + md_size, rec->orig_len,
+			rec->length + md_size, orig_len,
 			ssl->s3->read_mac_secret,
 			ssl->s3->read_mac_secret_size,
 			0 /* not SSLv3 */);

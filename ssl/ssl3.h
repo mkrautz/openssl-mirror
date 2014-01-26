@@ -349,10 +349,6 @@ typedef struct ssl3_record_st
 /*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 /*r */  unsigned long epoch;    /* epoch number, needed by DTLS1 */
 /*r */  unsigned char seq_num[8]; /* sequence number, needed by DTLS1 */
-/*rw*/	unsigned int orig_len;  /* How many bytes were available before padding
-				   was removed? This is used to implement the
-				   MAC check in constant time for CBC records.
-				 */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st
@@ -527,6 +523,15 @@ typedef struct ssl3_state_st
         unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
         unsigned char previous_server_finished_len;
         int send_connection_binding; /* TODOEKR */
+
+#ifndef OPENSSL_NO_TLSEXT
+#ifndef OPENSSL_NO_EC
+	/* This is set to true if we believe that this is a version of Safari
+	 * running on OS X 10.6 or newer. We wish to know this because Safari
+	 * on 10.8 .. 10.8.3 has broken ECDHE-ECDSA support. */
+	char is_probably_safari;
+#endif /* !OPENSSL_NO_EC */
+#endif /* !OPENSSL_NO_TLSEXT */
 	} SSL3_STATE;
 
 
